@@ -1,11 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from . import models, schemas
-from .db import get_db, engine, Base
-
-# 데이터베이스 테이블 생성
-Base.metadata.create_all(bind=engine)
+from fastapi import FastAPI, HTTPException
+from . import schemas
 
 app = FastAPI(title="My API")
 
@@ -15,92 +9,6 @@ product_name_to_model: dict[str, str] = {}
 @app.get("/")
 def read_root():
     return {"msg": "hello, fastapi"}
-
-@app.get("/health")
-def health_check(db: Session = Depends(get_db)):
-    """데이터베이스 연결 상태 확인"""
-    try:
-        # 간단한 쿼리로 데이터베이스 연결 확인
-        db.execute(text("SELECT 1"))
-        db.commit()
-        return {
-            "status": "healthy",
-            "database": "connected",
-            "message": "데이터베이스 연결 성공"
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"데이터베이스 연결 실패: {str(e)}"
-        )
-
-@app.get("/db-info")
-def db_info(db: Session = Depends(get_db)):
-    """데이터베이스 정보 및 테이블 목록 확인"""
-    try:
-        # SQLite의 경우 테이블 목록 조회
-        result = db.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
-        tables = [row[0] for row in result]
-        return {
-            "database": "connected",
-            "tables": tables,
-            "total_tables": len(tables)
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"데이터베이스 정보 조회 실패: {str(e)}"
-        )
-
-@app.get("/items", response_model=list[schemas.Item])
-def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    items = db.query(models.Item).offset(skip).limit(limit).all()
-    return items
-
-@app.get("/items/{item_id}", response_model=schemas.Item)
-def read_item(item_id: int, db: Session = Depends(get_db)):
-    item = db.query(models.Item).filter(models.Item.id == item_id).first()
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return item
-
-@app.post("/items", response_model=schemas.Item)
-def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)):
-    db_item = models.Item(name=item.name, price=item.price)
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-    return db_item
-
-@app.delete("/items/{item_id}")
-def delete_item(item_id: int, db: Session = Depends(get_db)):
-    item = db.query(models.Item).filter(models.Item.id == item_id).first()
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    db.delete(item)
-    db.commit()
-    return {"ok": True}
-
-# Products 엔드포인트
-@app.get("/products", response_model=list[schemas.Product])
-def read_products(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """products 테이블에서 모든 상품 조회"""
-    products = db.query(models.Product).offset(skip).limit(limit).all()
-    return products
-
-@app.get("/products/{product_id}", response_model=schemas.Product)
-def read_product(product_id: int, db: Session = Depends(get_db)):
-    """특정 상품 조회"""
-    product = db.query(models.Product).filter(models.Product.id == product_id).first()
-    if product is None:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return product
-
-@app.get("/products/search/{keyword}", response_model=list[schemas.Product])
-def search_products(keyword: str, db: Session = Depends(get_db)):
-    """상품명으로 검색"""
-    products = db.query(models.Product).filter(models.Product.name.like(f"%{keyword}%")).all()
-    return products
 
 # 제품명을 모델명으로 변환하는 엔드포인트
 @app.post("/normalize-product-name", response_model=schemas.ProductNameToModelResponse)
