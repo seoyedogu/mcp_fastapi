@@ -34,19 +34,6 @@ python -m app.main
 
 ### 일반
 - `GET /` - 루트 엔드포인트
-- `GET /health` - 데이터베이스 연결 상태 확인
-- `GET /db-info` - 데이터베이스 정보 및 테이블 목록
-
-### Items (테스트 테이블)
-- `GET /items` - 모든 아이템 조회 (페이징 지원: skip, limit)
-- `GET /items/{item_id}` - 특정 아이템 조회
-- `POST /items` - 새 아이템 생성
-- `DELETE /items/{item_id}` - 아이템 삭제
-
-### Products (실제 상품 데이터)
-- `GET /products` - 모든 상품 조회 (페이징 지원: skip, limit)
-- `GET /products/{product_id}` - 특정 상품 조회
-- `GET /products/search/{keyword}` - 상품명으로 검색
 
 ### 제품명 정규화
 - `POST /normalize-product-name` - 제품명을 모델명으로 변환하고 저장
@@ -103,22 +90,6 @@ curl http://localhost:8000/normalize-product-name/mappings
 }
 ```
 
-### Products 조회
-
-```bash
-# 모든 상품 조회 (처음 5개)
-curl http://localhost:8000/products?limit=5
-
-# 특정 상품 조회
-curl http://localhost:8000/products/1
-
-# 상품 검색
-curl http://localhost:8000/products/search/라이젠
-
-# 브라우저에서 확인
-# http://localhost:8000/products
-```
-
 ### API 테스트
 
 ```bash
@@ -143,21 +114,6 @@ python tests/test_connection.py
    - 제품 상세 정보에서 패턴 추출
 5. **메모리 저장**: 찾은 모델명을 메모리에 저장하여 다음 요청 시 재사용합니다.
 
-## 데이터베이스 설정
-
-`app/db.py` 파일에서 데이터베이스 연결 설정을 변경할 수 있습니다:
-
-```python
-# SQLite (기본값)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-
-# PostgreSQL 예시
-# SQLALCHEMY_DATABASE_URL = "postgresql://user:password@localhost/dbname"
-
-# MySQL 예시  
-# SQLALCHEMY_DATABASE_URL = "mysql+pymysql://user:password@localhost/dbname"
-```
-
 ## 문서
 
 서버 실행 후 다음 URL에서 API 문서를 확인할 수 있습니다:
@@ -172,6 +128,6 @@ SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
 ## 향후 개발 계획
 
-- 데이터베이스에 매핑 정보 영구 저장
-- 크롤링 기능과 연동하여 저장된 모델명으로 크롤링 수행
+- 매핑한 데이터를 통해 제품 상세페이지 크롤링
+- 
 - 모델명 추출 로직 개선 및 정확도 향상
